@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0f766e">
+  <title>Attendance Tracker</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icon-192.png">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="top">
+    <div>
+      <h1>Attendance Tracker</h1>
+      <p class="sub">BICT &middot; Year 2 &middot; Semester I</p>
+    </div>
+    <div class="overall">
+      <div id="overallBadge"></div>
+      <div id="syncChip" class="chip"></div>
+    </div>
+  </header>
+
+  <main>
+    <!-- TODAY -->
+    <section id="tab-today" class="tab active">
+      <div id="banner"></div>
+      <div class="datebar">
+        <button id="prevDay" aria-label="Previous day">&lsaquo;</button>
+        <div class="dateinfo">
+          <input type="date" id="datePick" aria-label="Date">
+          <span id="dayName"></span>
+        </div>
+        <button id="nextDay" aria-label="Next day">&rsaquo;</button>
+      </div>
+      <div class="subrow">
+        <span id="ttName" class="note"></span>
+        <button id="todayBtn" class="link">Jump to today</button>
+      </div>
+      <div id="dayList"></div>
+      <div class="actions">
+        <button id="addExtra" class="ghost">+ Extra / makeup lecture</button>
+        <button id="allPresent" class="ghost">Mark unmarked as present</button>
+        <button id="addHoliday" class="ghost">No lectures this day (holiday)</button>
+      </div>
+    </section>
+
+    <!-- STATS -->
+    <section id="tab-stats" class="tab">
+      <p class="hint" id="statsHint"></p>
+      <div id="statList"></div>
+    </section>
+
+    <!-- SETTINGS -->
+    <section id="tab-settings" class="tab">
+      <div class="card" id="acctCard"></div>
+
+      <div class="card">
+        <h3>Attendance rules</h3>
+        <label>Warning limit (%)
+          <input type="number" id="setThr" min="1" max="100" inputmode="numeric">
+        </label>
+        <p class="note">Handbook 3.6.3: <b>100%</b> attendance is compulsory per course unit. With a medical recommendation you may sit exams if overall attendance is above <b>50%</b>. Set the % you want to be warned at (default 80).</p>
+        <label>First day of semester
+          <input type="date" id="setStart">
+        </label>
+        <label>Last teaching day
+          <input type="date" id="setEnd">
+        </label>
+        <p class="note">The app counts every scheduled lecture hour between these two dates (minus holidays) to work out how many hours you can still miss.</p>
+        <label>Final timetable starts on
+          <input type="date" id="setFinal">
+        </label>
+        <p class="note">Days before this date use the temporary timetable, this date onwards uses the final timetable.</p>
+      </div>
+
+      <div class="card">
+        <h3>Holidays / vacation</h3>
+        <div id="holList"></div>
+        <div class="grid2">
+          <label>From <input type="date" id="holFrom"></label>
+          <label>To (optional) <input type="date" id="holTo"></label>
+        </div>
+        <label>Label <input type="text" id="holLabel" maxlength="40" placeholder="e.g. Mid-semester vacation"></label>
+        <button id="holAdd" class="ghost">Add holiday</button>
+        <p class="note">Lectures on these days are removed from the plan. Use it for public holidays, strikes and the mid-semester vacation week.</p>
+      </div>
+
+      <div class="card">
+        <h3>Backup</h3>
+        <div class="row">
+          <button id="exportBtn" class="ghost">Export data</button>
+          <button id="importBtn" class="ghost">Import data</button>
+          <input type="file" id="importFile" accept="application/json" hidden>
+        </div>
+        <button id="resetBtn" class="danger">Reset all attendance</button>
+      </div>
+
+      <div class="card">
+        <h3>Timetables</h3>
+        <div id="ttable"></div>
+      </div>
+    </section>
+  </main>
+
+  <nav class="tabs">
+    <button data-tab="today" class="on">Today</button>
+    <button data-tab="stats">Stats</button>
+    <button data-tab="settings">Settings</button>
+  </nav>
+
+  <dialog id="extraDlg">
+    <form method="dialog" id="extraForm">
+      <h3>Extra / makeup lecture</h3>
+      <p class="note" id="extraDate"></p>
+      <label>Course
+        <select id="exCourse"></select>
+      </label>
+      <label>Type
+        <select id="exType">
+          <option value="T">Theory (lecture)</option>
+          <option value="P">Practical</option>
+          <option value="">Other</option>
+        </select>
+      </label>
+      <div class="grid2">
+        <label>Start <input type="time" id="exStart" value="08:00"></label>
+        <label>End <input type="time" id="exEnd" value="09:00"></label>
+      </div>
+      <div class="grid2">
+        <label>Lecture hours <input type="number" id="exHours" min="0.5" max="8" step="0.5" value="1"></label>
+        <label>Room <input type="text" id="exRoom" maxlength="30" placeholder="optional"></label>
+      </div>
+      <div class="row">
+        <button type="button" id="exCancel" class="ghost">Cancel</button>
+        <button type="submit" id="exSave" class="primary">Add lecture</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div id="toast" role="status"></div>
+
+  <script src="data.js"></script>
+  <script src="logic.js"></script>
+  <script src="firebase-config.js"></script>
+  <script src="app.js"></script>
+  <script type="module" src="cloud.js"></script>
+</body>
+</html>
