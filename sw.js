@@ -1,4 +1,4 @@
-const CACHE = "att-v2";
+const CACHE = "att-v4";
 const FILES = ["./", "index.html", "style.css", "data.js", "logic.js", "firebase-config.js", "app.js", "cloud.js",
   "manifest.json", "icon-192.png", "icon-512.png"];
 

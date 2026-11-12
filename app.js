@@ -140,14 +140,39 @@ function renderBanner() {
 }
 
 /* ---------- extra lecture dialog ---------- */
+// The choices look exactly like the timetable: "TICT 2134 (T)" = theory, "TICT 2134 (P)" = practical.
+function lectureChoices() {
+  const out = [];
+  Object.keys(COURSES).forEach((code) => {
+    const types = code.startsWith("AUX") ? [""] : ["T", "P"];
+    types.forEach((type) => out.push({ value: code + "|" + type, label: sessionLabel({ code, type }) + " - " + COURSES[code].name }));
+  });
+  return out;
+}
+function pickedLecture() {
+  const [code, type] = $("exCourse").value.split("|");
+  return { code, type: type || "" };
+}
+function addMinutes(hhmm, min) {
+  const [h, m] = hhmm.split(":").map(Number);
+  const t = Math.min(23 * 60 + 59, h * 60 + m + min);
+  return pad(Math.floor(t / 60)) + ":" + pad(t % 60);
+}
 function openExtra() {
   const sel = $("exCourse");
-  if (!sel.options.length) {
-    Object.keys(COURSES).forEach((code) => sel.add(new Option(courseLabel(code) + " - " + COURSES[code].name, code)));
-  }
+  if (!sel.options.length) lectureChoices().forEach((c) => sel.add(new Option(c.label, c.value)));
   $("extraDate").textContent = DAYS[current.getDay()] + ", " + dateKey(current);
+  $("exEnd").dataset.touched = "";
   $("exHours").dataset.touched = "";
+  autoEnd();
   $("extraDlg").showModal();
+}
+// Practical = 2 hours (1h50), theory / other = 1 hour (55 min). The person can still change everything.
+function autoEnd() {
+  if (!$("exEnd").dataset.touched && $("exStart").value) {
+    $("exEnd").value = addMinutes($("exStart").value, pickedLecture().type === "P" ? 110 : 55);
+  }
+  autoHours();
 }
 function autoHours() {
   if ($("exHours").dataset.touched) return;
@@ -155,15 +180,16 @@ function autoHours() {
 }
 $("addExtra").onclick = openExtra;
 $("exCancel").onclick = () => $("extraDlg").close();
-$("exStart").oninput = autoHours;
-$("exEnd").oninput = autoHours;
+$("exCourse").onchange = autoEnd;
+$("exStart").oninput = autoEnd;
+$("exEnd").oninput = () => { $("exEnd").dataset.touched = "1"; autoHours(); };
 $("exHours").oninput = () => ($("exHours").dataset.touched = "1");
 $("extraForm").onsubmit = (e) => {
   const start = $("exStart").value, end = $("exEnd").value, hours = Number($("exHours").value);
   if (!start || !end || end <= start) { e.preventDefault(); toast("End time must be after start time"); return; }
   if (!(hours > 0 && hours <= 8)) { e.preventDefault(); toast("Hours must be between 0.5 and 8"); return; }
-  setItem("x:" + newId(), { date: dateKey(current), code: $("exCourse").value, type: $("exType").value,
-    start, end, hours, room: $("exRoom").value.trim().slice(0, 30) });
+  const { code, type } = pickedLecture();
+  setItem("x:" + newId(), { date: dateKey(current), code, type, start, end, hours, room: $("exRoom").value.trim().slice(0, 30) });
   toast("Extra lecture added");
 };
 
@@ -228,8 +254,9 @@ function renderSettings() {
   const t = $("ttable");
   t.innerHTML = "";
   const active = timetableFor(todayKey(), TIMETABLES, ctx().overrides);
-  TIMETABLES.forEach((tt) => {
-    const from = (tt === TIMETABLES[1] && s.finalFrom) || tt.from;
+  const fromOf = (tt) => (tt.id === "final" && s.finalFrom) || tt.from;
+  TIMETABLES.filter((tt) => tt === active || fromOf(tt) > todayKey()).forEach((tt) => {
+    const from = fromOf(tt);
     const h = document.createElement("div");
     h.className = "tt";
     h.textContent = tt.name + " (from " + from + ")" + (tt === active ? " - active now" : "");
